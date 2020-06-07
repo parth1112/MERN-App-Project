@@ -31,7 +31,7 @@ const AppError = require('../utils/appError');
     res.status(statusCode).json({
       status: 'success',
       data: {
-          user
+          userId: user._id
      },
      token
    });
