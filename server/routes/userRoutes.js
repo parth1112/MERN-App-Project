@@ -20,7 +20,7 @@ router.use(authController.protect);
 
 router
 .route('/profile/myPosts')
-.get(postController.getAllPosts)
+.get(postController.getMyPost, postController.getAllPosts)
 .post(postController.createPost);
 
 router.get('/profile', userController.getMe, userController.getUser);
