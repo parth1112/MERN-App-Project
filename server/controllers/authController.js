@@ -100,7 +100,6 @@ exports.protect = catchAsync(async (req, res, next) => {
     } else if (req.cookies.jwt) {
       token = req.cookies.jwt;
     }
-  
     if (!token) {
       return next(
         new AppError('You are not logged in! Please log in to get access.', 401)
@@ -133,6 +132,51 @@ exports.protect = catchAsync(async (req, res, next) => {
     res.locals.user = currentUser;
     next();
 });
+
+// Only for rendered pages, no errors!
+exports.isLoggedIn = async (req, res, next) => {
+  let token;
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith('Bearer')
+  ) {
+    token = req.headers.authorization.split(' ')[1];
+  } else if (req.cookies.jwt) {
+    token = req.cookies.jwt;
+  }
+
+  if (!token) {
+     return next();
+  }
+
+  try {
+      // 1) verify token by
+      const decoded = await promisify(jwt.verify)(
+        token,
+        process.env.JWT_SECRET
+      );
+
+      // 2) Check if user still exists
+      const currentUser = await User.findById(decoded.id);
+      if (!currentUser) {
+        return next();
+      }
+
+      // 3) Check if user changed password after the token was issued
+      if (currentUser.changedPasswordAfter(decoded.iat)) {
+        return next();
+      }
+
+      // THERE IS A LOGGED IN USER
+      req.user = currentUser;
+     res.locals.user = currentUser;
+      return next();
+    } catch (err) {
+      return next();
+    }
+ 
+};
+
 
 exports.forgotPassword = catchAsync(async(req, res, next) => {
     // 1) Get User based on POSTed email
