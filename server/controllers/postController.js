@@ -3,16 +3,17 @@ const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 const APIFeatures = require('../utils/apiFeatures');
 
+exports.getMyPost = (req, res, next) => {
+     // To allow for nested GET posts on user 
+   let filter = {};
+     filter = { user: req.user.id };
+     req.filter = filter; 
+     next();
+};
   
 exports.getAllPosts = catchAsync(async(req, res, next) => {
- // To allow for nested GET posts on user 
- let filter = {};
- if (req.user.id) {
-     filter = { user: req.user.id };
- }
-
-    //EXECUTE QUERY
-     const features = new APIFeatures( Post.find(filter), req.query)
+//EXECUTE QUERY
+     const features = new APIFeatures( Post.find(req.filter), req.query)
      .filter()
      .sort()
      .limitFields()
@@ -24,7 +25,7 @@ exports.getAllPosts = catchAsync(async(req, res, next) => {
         status: 'success',
         results: posts.length,
         data: {
-            data: posts
+            posts
         }
     })
     
@@ -83,14 +84,18 @@ exports.updatePost = catchAsync(async (req, res, next) => {
 
 exports.createPost = catchAsync(async (req, res, next) => {
       // Allow nested routes
-    if (!req.body.user) req.body.user = req.user.id;
-   
-    const newPost = await Post.create({
+         if(!req.body.user) {
+            req.body.user = req.user._id;
+            req.body.name = req.user.name;
+         } 
+
+     const newPost = await Post.create({
         discription: req.body.discription,
         likes: req.body.likes,
         dislikes: req.body.dislikes,
         comments: req.body.comments,
-        user:req.body.user
+        user:req.body.user,
+        name: req.body.name,
     });
 
     res.status(200).json({
