@@ -5,14 +5,14 @@ const APIFeatures = require('../utils/apiFeatures');
 
 exports.getMyPost = (req, res, next) => {
      // To allow for nested GET posts on user 
-   let filter = {};
-     filter = { user: req.user.id };
+  const  filter = { userName: req.user.userName };
      req.filter = filter; 
      next();
 };
   
-exports.getAllPosts = catchAsync(async(req, res, next) => {
-//EXECUTE QUERY
+ exports.getAllPosts = catchAsync(async(req, res, next) => {
+       //EXECUTE QUERY
+
      const features = new APIFeatures( Post.find(req.filter), req.query)
      .filter()
      .sort()
@@ -39,10 +39,14 @@ exports.getPost = catchAsync(async(req, res, next) => {
         return next(new AppError('No post found with that ID', 404));
     }
 
+    if(post.blackList){
+        return next (new AppError('Your post had been BLACKLISTED!!',404));
+      }
+
     res.status(200).json({
         status: 'success',
         data: {
-            data: post
+            post
         }
     })
     
@@ -50,52 +54,58 @@ exports.getPost = catchAsync(async(req, res, next) => {
 });
 
 exports.updatePost = catchAsync(async (req, res, next) => {
-  
-    const updatedPost = await Post.findByIdAndUpdate( req.params.id, req.body , {
-        new: true,
-        runValidators: true
-    });
- 
-    if(!updatedPost) {
-     return next(new AppError('No post found with that ID', 404));
- }
- 
-   res.status(200).json({
-     status: 'success',
-     data: {
-      data: updatedPost
-     }
-   });
+
+    const post = await Post.findById(req.params.id);
+     
+    if (!post) {
+        return next(new AppError('No post found with that ID', 404));
+      }
+     
+      if((req.user.userName !== post.userName) && (req.user.role !== 'admin')) {
+        return next(new AppError(`You don't have permission to update this post`,403));
+      }
+
+      if(req.body.discription) post.discription = req.body.discription;
+      else if(req.body.blackList && req.user.role === 'admin') post.blackList = req.body.blackList;
+
+      await post.save();
+
+    res.status(200).json({
+        status: 'success',
+        data: {
+           post
+        }
+     });
 
  });
 
  exports.deletePost = catchAsync(async (req, res, next) => {
 
     const post = await Post.findByIdAndDelete(req.params.id);
-  
-     if(!post) {
+
+    if(!post) {
       return next(new AppError('No post found with that ID', 404));
-  }
-     res.status(204).json({
+    }
+
+    if(req.user.userName !== post.userName && req.user.role !== 'admin') {
+      return next(new AppError(`You don't have permission to delete this post`,403));
+    }
+  
+    res.status(204).json({
       status: 'success',
-      data: null
+      message: 'Post deleted successfully'
     });
 });
 
 exports.createPost = catchAsync(async (req, res, next) => {
-      // Allow nested routes
-         if(!req.body.user) {
-            req.body.user = req.user._id;
-            req.body.name = req.user.name;
-         } 
 
+      if(!req.body.discription) {
+        return  next( new AppError('Please provide discription', 400));
+      }
+        
      const newPost = await Post.create({
         discription: req.body.discription,
-        likes: req.body.likes,
-        dislikes: req.body.dislikes,
-        comments: req.body.comments,
-        user:req.body.user,
-        name: req.body.name,
+        userName: req.user.userName
     });
 
     res.status(200).json({

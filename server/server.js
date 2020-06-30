@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-
+const dotenv = require('dotenv');
 
 process.on('uncaughtException', err => {
   console.log('UNCAUGHT EXCEPTION! Shutting down...');
@@ -8,9 +8,9 @@ process.on('uncaughtException', err => {
   process.exit(1);
 });
 
-const app = require('./app');
+dotenv.config({ path: './config.env' });
 
-require('dotenv').config();
+const app = require('./app');
 
 const uri = process.env.DATABASE_URI;
 mongoose
@@ -24,7 +24,8 @@ mongoose
 const connection = mongoose.connection;
 
 connection.once('open',  () => {
-  console.log('DB connection succesfull!')
+  console.log(process.env.NODE_ENV);
+  console.log('DB connection succesfull!');
 })
 .catch( err => console.log(err));
 

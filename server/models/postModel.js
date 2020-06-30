@@ -8,25 +8,21 @@ const postSchema = new mongoose.Schema({
       maxlength: [100, 'A post must have less or equal to 100 characters'],
       minlength: [1, 'A post must have more or equal to 1 characters'],
    },
-  likes: {
+   upVotes: {
      type: Number,
      default: 0,
    },
-   dislikes: {
+   downVotes: {
     type: Number,
     default: 0,
   },
-  comments: {
+  userName: {
     type: String,
-    trim: true
-   },
-   user:{ 
-    type: mongoose.Schema.ObjectId,
-    ref: 'User',
     required: [true, 'A Post must belong to a user']
   },
-  name: {
-    type: String,
+  blackList: {
+    type: Boolean,
+    default: false
   }
 }, {
     timestamps: true
@@ -35,13 +31,10 @@ const postSchema = new mongoose.Schema({
   toObject: { virtuals: true }
 });
 
-// postSchema.pre(/^find/, function(next) {
-//     this.populate({
-//      path: 'user',
-//      select: 'name'
-//     });
-//     next();
-// });
+postSchema.pre(/^find/, function(next) {
+  this.find({ blackList: { $ne: true } });
+   next();
+});
 
 const Post = mongoose.model('Post', postSchema);
 

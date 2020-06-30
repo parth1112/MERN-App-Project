@@ -5,8 +5,9 @@ const crypto = require('crypto');
 
 
 const userSchema = new mongoose.Schema({
-    name: {
+    userName: {
         type: String,
+        unique: true,
         required: [true, 'please tell us your name!']
     },
     email: {
@@ -18,18 +19,19 @@ const userSchema = new mongoose.Schema({
     },
     role: {
         type: String,
-        enums: ['user','guest','admin'],
+        enums: ['user','admin'],
         default: 'user'
       },
     password: {
         type: String,
         required: [true, 'Please provide a password'],
-        minlength: 8
-      //  select: false
+        minlength: 8,
+        select: false
     },
     passwordConfirm: {
         type: String,
-        required: [true, 'PLease confirm your password'],
+        required: [true, 'Please confirm your password'],
+        minlength: 8,
         validate: {
             //This only works on CREATE and SAVE!!!
             validator: function(el) {
@@ -45,6 +47,10 @@ const userSchema = new mongoose.Schema({
         type: Boolean,
         default: true,
         select: false
+    },
+    blackList: {
+      type: Boolean,
+      default: false
     }
 }, {
     timestamps: true
@@ -53,13 +59,7 @@ const userSchema = new mongoose.Schema({
     toObject: { virtuals: true }
   });
 
-// Virtual populate
-// userSchema.virtual('posts', {
-//     ref: 'Post',
-//     foreignField: 'user',
-//     localField: '_id'
-// });
-
+userSchema.index({ userName: 1 }, { unique: true, sparse: true });
 
 userSchema.pre('save', async function(next) {
     // Only run this function if password was actually modified
@@ -113,9 +113,7 @@ userSchema.methods.createPasswordResetToken = function () {
     .createHash('sha256')
     .update(resetToken)
     .digest('hex'); 
-   
- //  console.log({resetToken}, this.passwordResetToken);
-   
+      
     this.passwordResetExpires = Date.now() + 10 * 60 * 1000;
    
     return resetToken;
