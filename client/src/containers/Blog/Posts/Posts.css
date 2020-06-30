@@ -1,0 +1,21 @@
+.Posts {
+ text-align: center;
+}
+
+.Posts button {
+    margin: 5px 0;
+    padding: 10px;
+    font: inherit;
+    border: 1px solid #fa923f;
+    background-color: transparent;
+    text-align: center;
+    color: #fa923f;
+    cursor: pointer;
+    margin-bottom: 20px;
+}
+
+.Posts button:hover,
+.Posts button:active {
+    color: white;
+    background-color: #fa923f;
+}
