@@ -1,0 +1,11 @@
+.post h2 {
+    font-size: 1.15rem;
+    margin: 0.25rem 0;
+    color: #534b4b;
+  }
+  
+
+  .post p {
+    color: black;
+    margin: 0.25rem 0;
+  }
