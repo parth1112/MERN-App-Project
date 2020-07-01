@@ -46,7 +46,7 @@ app.use('/api/users', userRouter);
 app.use('/api/posts', postRouter);
 app.use('/api/reviews', reviewRouter);
 
-app.use(express.static('../client/build'));
+app.use(express.static('./client/build'));
 
 
 app.all('*', (req, res, next) => {
